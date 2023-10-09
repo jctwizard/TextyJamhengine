@@ -1,0 +1,3 @@
+[submodule "jamhengine"]
+	path = jamhengine
+	url = https://github.com/Henwuar/jamhengine.git
