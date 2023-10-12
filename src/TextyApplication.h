@@ -7,6 +7,8 @@
 #include <iostream>
 #include <fstream>
 #include <shlobj.h>
+#include <direct.h>
+#include<map>
 
 using namespace jhe;
 using namespace std;
@@ -19,7 +21,11 @@ public:
     bool Init() override;
     void Run();
 
-    void DrawCanvas(TextyCanvas canvas);
+    void DrawCanvas(TextyCanvas canvas, bool clear);
+    void CreateText(string text, int x, int y, int spacing);
+    void ClearText();
+    vector<vector<int>> LoadGlyph(string fileName, bool checkCache);
+    bool SaveGlyph(string fileName, vector<vector<int>> data);
 
     std::string GetSaveExtension();
     std::string GetSavePath();
@@ -31,21 +37,25 @@ private:
     const int PIXEL_SCALE_X = 16;
     const int PIXEL_SCALE_Y = 16;
 
-    const int GAME_WIDTH = 32;
-    const int GAME_HEIGHT = 32;
+    const int GAME_WIDTH = 64;
+    const int GAME_HEIGHT = 64;
     const int CANVAS_WIDTH = 5;
     const int CANVAS_HEIGHT = 5;
 
+    const iColor WINDOW_COLOUR = 0xaaaaaa;
     const iColor CLEAR_COLOUR = 0;
 
     const iColor PAINT_COLOURS[4] = { 0xffffff, ICOL_RED, ICOL_GREEN, ICOL_BLUE };
     const iColor MOUSE_COLOUR = 0xbbbbbb;
 
     PixelRenderer m_renderer;
-    TextyCanvas m_canvas;
+    TextyCanvas m_paintCanvas;
+    vector<TextyCanvas> m_textCanvases;
 
     int m_currentPaintColourIndex = 0;
     glm::vec2 m_previousMousePixel = glm::vec2();
+
+    std::map<string, vector<vector<int>>> m_fontCache;
 };
 
 Application* CreateApplication() { return new TextyApplication("Texty!"); }

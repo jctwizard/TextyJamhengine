@@ -1,36 +1,49 @@
 #include "TextyCanvas.h"
 
-void TextyCanvas::Create(int width, int height)
+void TextyCanvas::Create(int x, int y, int width, int height)
 {
+    m_x = x;
+    m_y = y;
+
     m_width = width;
     m_height = height;
 
-    Clear(-1);
+    Clear(0);
 }
 
 void TextyCanvas::Clear(int colour)
 {
-    m_canvas.clear();
+    m_data.clear();
 
     for (int y = 0; y < m_height; y++)
     {
+        m_data.push_back({});
+
         for (int x = 0; x < m_width; x++)
         {
-            m_canvas.push_back(colour);
+            m_data[y].push_back(colour);
         }
     }
 }
 
-void TextyCanvas::Paint(int x, int y, int moveX, int moveY, int colour)
+void TextyCanvas::Paint(int x, int y, int colour)
 {
-    int pixelIndex = GetPixelIndex(x, y);
-    m_canvas[pixelIndex] = colour;
+    m_data[y][x] = colour;
 }
 
 int TextyCanvas::GetPixelColour(int x, int y)
 {
-    int pixelIndex = GetPixelIndex(x, y);
-    return m_canvas[pixelIndex];
+    return m_data[y][x];
+}
+
+int TextyCanvas::GetX()
+{
+    return m_x;
+}
+
+int TextyCanvas::GetY()
+{
+    return m_y;
 }
 
 int TextyCanvas::GetWidth()
@@ -43,7 +56,12 @@ int TextyCanvas::GetHeight()
     return m_height;
 }
 
-int TextyCanvas::GetPixelIndex(int x, int y)
+std::vector<std::vector<int>> TextyCanvas::GetData()
 {
-    return (y * m_width) + x;
+    return m_data;
+}
+
+void TextyCanvas::SetData(std::vector<std::vector<int>> data)
+{
+    m_data = data;
 }

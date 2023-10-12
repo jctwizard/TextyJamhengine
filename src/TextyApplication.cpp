@@ -16,7 +16,7 @@ bool TextyApplication::Init()
     m_renderer.Create(GAME_WIDTH, GAME_HEIGHT);
     m_renderer.Clear(CLEAR_COLOUR);
 
-    m_canvas.Create(CANVAS_WIDTH, CANVAS_HEIGHT);
+    m_paintCanvas.Create(1, 1, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     m_previousMousePixel = Input::GetMousePosition();
 
@@ -29,7 +29,7 @@ string TextyApplication::GetSavePath()
 
     SHGetSpecialFolderPath(NULL, savePath, CSIDL_DESKTOPDIRECTORY, FALSE);
 
-    return string(savePath) + "/";
+    return string(savePath) + "/Texty/";
 }
 
 string TextyApplication::GetSaveExtension()
@@ -45,12 +45,28 @@ void TextyApplication::Run()
 
     if (Input::GetKeyDown(GLFW_KEY_SPACE))
     {
-        m_canvas.Clear(-1);
+        m_paintCanvas.Clear(0);
+    }
+
+    if (Input::GetKeyDown(GLFW_KEY_F))
+    {
+        ClearText();
+        CreateText("abcdefghij", 1, 10, 1);
+        CreateText("klmnopqrst", 1, 20, 1);
+        CreateText("uvwxyz0123", 1, 30, 1);
+        CreateText("456789!\"£$", 1, 40, 1);
+        CreateText("%^&*()-_=+", 1, 50, 1);
+        CreateText("{}[]:;@'~#<", 1, 60, 1);
+        CreateText(",>.?/|\\", 1, 70, 1);
     }
 
     if (Input::GetKeyDown(GLFW_KEY_W))
     {
         string fileName;
+
+        cout << "\n\npreparing to write file, enter name (no extension)\n";
+
+        _mkdir(GetSavePath().c_str());
 
         // Take input using cin 
         cin >> fileName;
@@ -60,54 +76,38 @@ void TextyApplication::Run()
             fileName = DEFAULT_FILENAME;
         }
 
-        ofstream outputFile;
-        outputFile.open(GetSavePath() + fileName + GetSaveExtension());
+        bool success = SaveGlyph(fileName, m_paintCanvas.GetData());
 
-        for (int pixelY = 0; pixelY < m_canvas.GetHeight(); pixelY++)
+        if (success)
         {
-            for (int pixelX = 0; pixelX < m_canvas.GetWidth(); pixelX++)
-            {
-                outputFile << m_canvas.GetPixelColour(pixelX, pixelY) + 1;
-            }
-            outputFile << "\n";
+            cout << "\nsuccessfully saved file to Desktop/Texty: " + fileName + GetSaveExtension() + "\n";
         }
-
-        cout << "saved file to Desktop: " + fileName + GetSaveExtension();
-
-        outputFile.close();
+        else
+        {
+            cout << "\nfailed to save file to Desktop/Texty: " + fileName + GetSaveExtension() + "\n";
+        }
     }
 
     if (Input::GetKeyDown(GLFW_KEY_R))
     {
         string fileName;
 
+        cout << "\n\npreparing to read file, enter name (no extension)\n";
+
         // Take input using cin 
         cin >> fileName;
 
-        ifstream inputFile;
-        inputFile.open(GetSavePath() + fileName + GetSaveExtension());
+        vector<vector<int>> data = LoadGlyph(fileName, false);
 
-        if (inputFile.is_open())
+        if (data.size() > 0)
         {
-            string nextLine = "";
-            int y = 0;
+            m_paintCanvas.SetData(data);
 
-            while (getline(inputFile, nextLine))
-            {
-                for (int x = 0; x < nextLine.length(); x++)
-                {
-                    if (nextLine.at(x) != '\n')
-                    {
-                        int pixelColour = (int)nextLine[x] - 48;
-
-                        m_canvas.Paint(x, y, 1, 1, pixelColour - 1);
-                    }
-                }
-
-                y += 1;
-            }
-
-            inputFile.close();
+            cout << "\nsuccessfully read file from Desktop/Texty: " + fileName + GetSaveExtension();
+        }
+        else
+        {
+            cout << "\nfailed to read file from Desktop/Texty: " + fileName + GetSaveExtension();
         }
     }
 
@@ -133,36 +133,29 @@ void TextyApplication::Run()
         }
     }
 
-    if (Input::GetMouseButton(GLFW_MOUSE_BUTTON_1))
+    if (mousePixel.x >= m_paintCanvas.GetX() && mousePixel.x < m_paintCanvas.GetX() + m_paintCanvas.GetWidth() && mousePixel.y >= m_paintCanvas.GetY() && mousePixel.y < m_paintCanvas.GetHeight() + m_paintCanvas.GetY())
     {
-        // Set new mouse pixel
-        glm::vec2 mouseMove = mousePixel - m_previousMousePixel;
-
-        if (Input::GetMouseButtonDown(GLFW_MOUSE_BUTTON_1))
+        if (Input::GetMouseButton(GLFW_MOUSE_BUTTON_1))
         {
-            mouseMove = glm::vec2(1, 1);
+            m_paintCanvas.Paint(mousePixel.x - m_paintCanvas.GetX(), mousePixel.y - m_paintCanvas.GetY(), m_currentPaintColourIndex + 1);
         }
 
-        m_canvas.Paint(mousePixel.x, mousePixel.y, mouseMove.x, mouseMove.y, m_currentPaintColourIndex);
-    }
-
-    if (Input::GetMouseButton(GLFW_MOUSE_BUTTON_2))
-    {
-        glm::vec2 mouseMove = mousePixel - m_previousMousePixel;
-
-        if (Input::GetMouseButtonDown(GLFW_MOUSE_BUTTON_2))
+        if (Input::GetMouseButton(GLFW_MOUSE_BUTTON_2))
         {
-            mouseMove = glm::vec2(1, 1);
+            m_paintCanvas.Paint(mousePixel.x - m_paintCanvas.GetX(), mousePixel.y - m_paintCanvas.GetY(), 0);
         }
-
-        m_canvas.Paint(mousePixel.x, mousePixel.y, mouseMove.x, mouseMove.y, -1);
     }
         
-    m_renderer.Clear(CLEAR_COLOUR);
+    m_renderer.Clear(WINDOW_COLOUR);
 
-    DrawCanvas(m_canvas);
+    DrawCanvas(m_paintCanvas, true);
+
+    for (int textCanvas = 0; textCanvas < m_textCanvases.size(); textCanvas++)
+    {
+        DrawCanvas(m_textCanvases[textCanvas], false);
+    }
     
-    m_renderer.SetPixel(mousePixel.x, mousePixel.y, PAINT_COLOURS[m_currentPaintColourIndex], true);
+    m_renderer.SetPixel(mousePixel.x, mousePixel.y, PAINT_COLOURS[m_currentPaintColourIndex]);
 
     m_renderer.Render();
 
@@ -178,24 +171,137 @@ void TextyApplication::Run()
     m_previousMousePixel = mousePixel;
 }
 
-void TextyApplication::DrawCanvas(TextyCanvas canvas)
+void TextyApplication::DrawCanvas(TextyCanvas canvas, bool clear)
 {
     for (int y = 0; y < canvas.GetHeight(); y++)
     {
         for (int x = 0; x < canvas.GetWidth(); x++)
         {
-            int pixelColour = canvas.GetPixelColour(x, y);
+            int pixelColour = canvas.GetPixelColour(x, y) - 1;
 
-            if (pixelColour == -1)
+            if (canvas.GetX() + x >= 0 && canvas.GetX() + x < GAME_WIDTH && canvas.GetY() + y >= 0 && canvas.GetY() + y < GAME_HEIGHT)
             {
-                m_renderer.SetPixel(x, y, CLEAR_COLOUR);
-            }
-            else if (pixelColour >= 0 && pixelColour < sizeof(PAINT_COLOURS) / sizeof(iColor))
-            {
-                m_renderer.SetPixel(x, y, PAINT_COLOURS[pixelColour]);
+                if (pixelColour == -1 && clear)
+                {
+                    m_renderer.SetPixel(canvas.GetX() + x, canvas.GetY() + y, CLEAR_COLOUR);
+                }
+                else if (pixelColour >= 0 && pixelColour < sizeof(PAINT_COLOURS) / sizeof(iColor))
+                {
+                    m_renderer.SetPixel(canvas.GetX() + x, canvas.GetY() + y, PAINT_COLOURS[pixelColour]);
+                }
             }
         }
     }
+}
+
+vector<vector<int>> TextyApplication::LoadGlyph(string fileName, bool checkCache)
+{
+    if (checkCache)
+    {
+        if (m_fontCache.find(fileName) != m_fontCache.end())
+        {
+            return m_fontCache[fileName];
+        }
+    }
+
+    ifstream inputFile;
+    inputFile.open(GetSavePath() + fileName + GetSaveExtension());
+
+    if (inputFile.is_open())
+    {
+        string nextLine = "";
+        int y = 0;
+
+        m_paintCanvas.Clear(0);
+
+        vector<vector<int>> data;
+
+        while (getline(inputFile, nextLine))
+        {
+            data.push_back({});
+
+            for (int x = 0; x < nextLine.length(); x++)
+            {
+                if (nextLine.at(x) != '\n')
+                {
+                    int pixelColour = (int)nextLine[x] - 48;
+
+                    data[y].push_back(pixelColour);
+                }
+            }
+
+            y += 1;
+        }
+
+        if (data.size() > 0 && fileName.length() == 1)
+        {
+            m_fontCache[fileName] = data;
+        }
+
+        inputFile.close();
+
+        return data;
+    }
+    else
+    {
+        return {};
+    }
+}
+
+bool TextyApplication::SaveGlyph(string fileName, vector<vector<int>> data)
+{
+    if (data.size() > 0 && fileName.length() == 1)
+    {
+        m_fontCache[fileName] = data;
+    }
+
+    ofstream outputFile;
+    outputFile.open(GetSavePath() + fileName + GetSaveExtension());
+
+    if (outputFile.is_open())
+    {
+        for (int pixelY = 0; pixelY < m_paintCanvas.GetHeight(); pixelY++)
+        {
+            for (int pixelX = 0; pixelX < m_paintCanvas.GetWidth(); pixelX++)
+            {
+                outputFile << data[pixelY][pixelX];
+            }
+            outputFile << "\n";
+        }
+
+        outputFile.close();
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void TextyApplication::CreateText(std::string text, int x, int y, int spacing)
+{
+    int width = 0;
+
+    for (int glyph = 0; glyph < text.length(); glyph++)
+    {
+        vector<vector<int>> glyphData = LoadGlyph(text.substr(glyph, 1), true);
+
+        if (glyphData.size() > 0 && glyphData[0].size() > 0)
+        {
+            TextyCanvas newCanvas;
+            newCanvas.Create(x + width + spacing * glyph, y, glyphData[0].size(), glyphData.size());
+            newCanvas.SetData(glyphData);
+            m_textCanvases.push_back(newCanvas);
+
+            width += glyphData[0].size();
+        }
+    }
+}
+
+void TextyApplication::ClearText()
+{
+    m_textCanvases.clear();
 }
 
 glm::vec2 TextyApplication::GetMousePixel()
