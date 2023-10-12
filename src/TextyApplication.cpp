@@ -2,8 +2,8 @@
 
 TextyApplication::TextyApplication(const char* applicationName) : Application(applicationName)
 {
-    m_defaultWindowWidth = SCREEN_WIDTH;
-    m_defaultWindowHeight = SCREEN_HEIGHT;
+    m_defaultWindowWidth = GAME_WIDTH * PIXEL_SCALE_X;
+    m_defaultWindowHeight = GAME_HEIGHT * PIXEL_SCALE_Y;
 }
 
 bool TextyApplication::Init()
@@ -16,20 +16,25 @@ bool TextyApplication::Init()
     m_renderer.Create(GAME_WIDTH, GAME_HEIGHT);
     m_renderer.Clear(CLEAR_COLOUR);
 
-    m_canvas.Create(GAME_WIDTH, GAME_HEIGHT);
+    m_canvas.Create(CANVAS_WIDTH, CANVAS_HEIGHT);
 
     m_previousMousePixel = Input::GetMousePosition();
 
     return true;
 }
 
-std::string TextyApplication::GetSavePath()
+string TextyApplication::GetSavePath()
 {
     char savePath[MAX_PATH] = { 0 };
 
     SHGetSpecialFolderPath(NULL, savePath, CSIDL_DESKTOPDIRECTORY, FALSE);
 
-    return std::string(savePath) + "/";
+    return string(savePath) + "/";
+}
+
+string TextyApplication::GetSaveExtension()
+{
+    return ".txt";
 }
 
 void TextyApplication::Run()
@@ -45,44 +50,65 @@ void TextyApplication::Run()
 
     if (Input::GetKeyDown(GLFW_KEY_W))
     {
-        std::ofstream outputFile;
-        outputFile.open(GetSavePath() + "drawing.txt");
+        string fileName;
 
-        for (int pixelY = 0; pixelY < GAME_HEIGHT; pixelY++)
+        // Take input using cin 
+        cin >> fileName;
+
+        if (fileName == "")
         {
-            for (int pixelX = 0; pixelX < GAME_WIDTH; pixelX++)
+            fileName = DEFAULT_FILENAME;
+        }
+
+        ofstream outputFile;
+        outputFile.open(GetSavePath() + fileName + GetSaveExtension());
+
+        for (int pixelY = 0; pixelY < m_canvas.GetHeight(); pixelY++)
+        {
+            for (int pixelX = 0; pixelX < m_canvas.GetWidth(); pixelX++)
             {
                 outputFile << m_canvas.GetPixelColour(pixelX, pixelY) + 1;
             }
             outputFile << "\n";
         }
 
+        cout << "saved file to Desktop: " + fileName + GetSaveExtension();
+
         outputFile.close();
     }
 
     if (Input::GetKeyDown(GLFW_KEY_R))
     {
-        std::ifstream intputFile;
-        intputFile.open(GetSavePath() + "drawing.txt");
-        std::string nextLine = "";
-        int y = 0;
+        string fileName;
 
-        while (std::getline(intputFile, nextLine))
+        // Take input using cin 
+        cin >> fileName;
+
+        ifstream inputFile;
+        inputFile.open(GetSavePath() + fileName + GetSaveExtension());
+
+        if (inputFile.is_open())
         {
-            for (int x = 0; x < nextLine.length(); x++)
-            {
-                if (nextLine.at(x) != '\n')
-                {
-                    int pixelColour = (int)nextLine[x] - 48;
+            string nextLine = "";
+            int y = 0;
 
-                    m_canvas.Paint(x, y, 1, 1, pixelColour - 1);
+            while (getline(inputFile, nextLine))
+            {
+                for (int x = 0; x < nextLine.length(); x++)
+                {
+                    if (nextLine.at(x) != '\n')
+                    {
+                        int pixelColour = (int)nextLine[x] - 48;
+
+                        m_canvas.Paint(x, y, 1, 1, pixelColour - 1);
+                    }
                 }
+
+                y += 1;
             }
 
-            y += 1;
+            inputFile.close();
         }
-
-        intputFile.close();
     }
 
     if (Input::GetKeyDown(GLFW_KEY_LEFT))
@@ -135,8 +161,8 @@ void TextyApplication::Run()
     m_renderer.Clear(CLEAR_COLOUR);
 
     DrawCanvas(m_canvas);
-
-    m_renderer.SetPixel(mousePixel.x, mousePixel.y, PAINT_COLOURS[m_currentPaintColourIndex]);
+    
+    m_renderer.SetPixel(mousePixel.x, mousePixel.y, PAINT_COLOURS[m_currentPaintColourIndex], true);
 
     m_renderer.Render();
 
@@ -174,11 +200,8 @@ void TextyApplication::DrawCanvas(TextyCanvas canvas)
 
 glm::vec2 TextyApplication::GetMousePixel()
 {
-    float pixelRatioX = (float)GAME_WIDTH / (float)SCREEN_WIDTH;
-    float pixelRatioY = (float)GAME_HEIGHT / (float)SCREEN_HEIGHT;
-
-    int mousePixelX = clamp((int)floor(Input::GetMousePosition().x * pixelRatioX), 0, GAME_WIDTH - 1);
-    int mousePixelY = clamp((int)floor(Input::GetMousePosition().y * pixelRatioY), 0, GAME_HEIGHT - 1);
+    int mousePixelX = clamp((int)floor(Input::GetMousePosition().x / (float)PIXEL_SCALE_X), 0, GAME_WIDTH - 1);
+    int mousePixelY = clamp((int)floor(Input::GetMousePosition().y / (float)PIXEL_SCALE_Y), 0, GAME_HEIGHT - 1);
     
     return glm::vec2(mousePixelX, mousePixelY);
 }

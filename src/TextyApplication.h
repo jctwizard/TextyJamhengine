@@ -9,6 +9,7 @@
 #include <shlobj.h>
 
 using namespace jhe;
+using namespace std;
 
 class TextyApplication : public jhe::Application
 {
@@ -20,15 +21,20 @@ public:
 
     void DrawCanvas(TextyCanvas canvas);
 
+    std::string GetSaveExtension();
     std::string GetSavePath();
     glm::vec2 GetMousePixel();
 
 private:
-    const int SCREEN_WIDTH = 512;
-    const int SCREEN_HEIGHT = 256;
+    const string DEFAULT_FILENAME = "drawing";
 
-    const int GAME_WIDTH = 16;
-    const int GAME_HEIGHT = 8;
+    const int PIXEL_SCALE_X = 16;
+    const int PIXEL_SCALE_Y = 16;
+
+    const int GAME_WIDTH = 32;
+    const int GAME_HEIGHT = 32;
+    const int CANVAS_WIDTH = 5;
+    const int CANVAS_HEIGHT = 5;
 
     const iColor CLEAR_COLOUR = 0;
 
