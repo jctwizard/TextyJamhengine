@@ -27,6 +27,8 @@ public:
     vector<vector<int>> LoadGlyph(string fileName, bool checkCache);
     bool SaveGlyph(string fileName, vector<vector<int>> data);
 
+    char GetCharFromFileName(std::string fileName);
+    std::string GetFileNameFromChar(char character);
     std::string GetSaveExtension();
     std::string GetSavePath();
     glm::vec2 GetMousePixel();
@@ -34,11 +36,11 @@ public:
 private:
     const string DEFAULT_FILENAME = "drawing";
 
-    const int PIXEL_SCALE_X = 16;
-    const int PIXEL_SCALE_Y = 16;
+    const int PIXEL_SCALE_X = 8;
+    const int PIXEL_SCALE_Y = 8;
 
-    const int GAME_WIDTH = 64;
-    const int GAME_HEIGHT = 64;
+    const int GAME_WIDTH = 128;
+    const int GAME_HEIGHT = 128;
     const int CANVAS_WIDTH = 5;
     const int CANVAS_HEIGHT = 5;
 

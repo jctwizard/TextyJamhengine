@@ -32,6 +32,53 @@ string TextyApplication::GetSavePath()
     return string(savePath) + "/Texty/";
 }
 
+const char validChars[] = { 'a', 'z', 'A', 'Z', '0', '9' };
+
+string TextyApplication::GetFileNameFromChar(char character)
+{
+    string fileName = " ";
+    fileName[0] = character;
+
+    bool valid = false;
+
+    for (int limit = 0; limit < (sizeof(validChars) / sizeof(int)); limit += 2)
+    {
+        if ((int)character >= (int)validChars[limit] && (int)character <= (int)validChars[limit + 1])
+        {
+            valid = true;
+            break;
+        }
+    }
+
+    // if the character is not a valid filename then use the character code with prefix "c"
+    if (valid == false)
+    {
+        fileName = "c" + to_string((int)character);
+    }
+
+    return fileName;
+}
+
+char TextyApplication::GetCharFromFileName(string fileName)
+{
+    if (fileName.size() == 1)
+    {
+        return fileName[0];
+    }
+    else if (fileName.size() > 1 && fileName[0] == 'c')
+    {
+        string characterCodeString = fileName.substr(1, fileName.size() - 1);
+
+        // the rest of the filename is digits
+        if (characterCodeString.find_first_not_of("0123456789") == string::npos)
+        {
+            return (char)stoi(characterCodeString);
+        }
+    }
+
+    return ' ';
+}
+
 string TextyApplication::GetSaveExtension()
 {
     return ".txt";
@@ -51,13 +98,16 @@ void TextyApplication::Run()
     if (Input::GetKeyDown(GLFW_KEY_F))
     {
         ClearText();
-        CreateText("abcdefghij", 1, 10, 1);
-        CreateText("klmnopqrst", 1, 20, 1);
-        CreateText("uvwxyz0123", 1, 30, 1);
-        CreateText("456789!\"£$", 1, 40, 1);
-        CreateText("%^&*()-_=+", 1, 50, 1);
-        CreateText("{}[]:;@'~#<", 1, 60, 1);
-        CreateText(",>.?/|\\", 1, 70, 1);
+        CreateText("ABCDEFGHIJ", 1, 10, 1);
+        CreateText("KLMNOPQRST", 1, 20, 1);
+        CreateText("UVQXYZ?/|\\", 1, 30, 1);
+        CreateText("abcdefghij", 1, 40, 1);
+        CreateText("klmnopqrst", 1, 50, 1);
+        CreateText("uvwxyz0123", 1, 60, 1);
+        CreateText("456789!\"£$", 1, 70, 1);
+        CreateText("%^&*()-_=+", 1, 80, 1);
+        CreateText("{}[]:;@'~#<", 1, 90, 1);
+        CreateText(",>.", 1, 100, 1);
     }
 
     if (Input::GetKeyDown(GLFW_KEY_W))
@@ -96,6 +146,11 @@ void TextyApplication::Run()
 
         // Take input using cin 
         cin >> fileName;
+
+        if (fileName == "")
+        {
+            fileName = DEFAULT_FILENAME;
+        }
 
         vector<vector<int>> data = LoadGlyph(fileName, false);
 
@@ -205,7 +260,15 @@ vector<vector<int>> TextyApplication::LoadGlyph(string fileName, bool checkCache
     }
 
     ifstream inputFile;
-    inputFile.open(GetSavePath() + fileName + GetSaveExtension());
+
+    string validFileName = fileName;
+
+    if (validFileName.size() == 1)
+    {
+        validFileName = GetFileNameFromChar(validFileName[0]);
+    }
+
+    inputFile.open(GetSavePath() + validFileName + GetSaveExtension());
 
     if (inputFile.is_open())
     {
@@ -256,7 +319,15 @@ bool TextyApplication::SaveGlyph(string fileName, vector<vector<int>> data)
     }
 
     ofstream outputFile;
-    outputFile.open(GetSavePath() + fileName + GetSaveExtension());
+
+    string validFileName = fileName;
+
+    if (validFileName.size() == 1)
+    {
+        validFileName = GetFileNameFromChar(validFileName[0]);
+    }
+
+    outputFile.open(GetSavePath() + validFileName + GetSaveExtension());
 
     if (outputFile.is_open())
     {
