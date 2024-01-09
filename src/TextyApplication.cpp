@@ -98,16 +98,12 @@ void TextyApplication::Run()
     if (Input::GetKeyDown(GLFW_KEY_F))
     {
         ClearText();
-        CreateText("ABCDEFGHIJ", 1, 10, 1);
-        CreateText("KLMNOPQRST", 1, 20, 1);
-        CreateText("UVQXYZ?/|\\", 1, 30, 1);
-        CreateText("abcdefghij", 1, 40, 1);
-        CreateText("klmnopqrst", 1, 50, 1);
-        CreateText("uvwxyz0123", 1, 60, 1);
-        CreateText("456789!\"£$", 1, 70, 1);
-        CreateText("%^&*()-_=+", 1, 80, 1);
-        CreateText("{}[]:;@'~#<", 1, 90, 1);
-        CreateText(",>.", 1, 100, 1);
+        CreateText(" !\"#$%&'()*+,-./", 1, 10, 1);
+        CreateText("0123456789:;<=>?", 1, 20, 1);
+        CreateText("@ABCDEFGHIJKLMNO", 1, 30, 1);
+        CreateText("PQRSTUVWXYZ[\\]^_", 1, 40, 1);
+        CreateText("'abcdefghijklmno", 1, 50, 1);
+        CreateText("pqrstuvwxyz{|}~", 1, 60, 1);
     }
 
     if (Input::GetKeyDown(GLFW_KEY_W))
